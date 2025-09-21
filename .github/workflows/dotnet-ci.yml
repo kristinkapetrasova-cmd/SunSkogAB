@@ -1,10 +1,11 @@
+# .github/workflows/dotnet-ci.yml
 name: .NET CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ "main" ]
 
 jobs:
   build-test:
@@ -14,52 +15,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET 8
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: 8.0.x
 
       - name: Restore
-        run: dotnet restore ./SunSkog.Api.sln
+        run: |
+          dotnet restore SunSkog.Api/SunSkog.Api.csproj
+          dotnet restore SunSkog.Api.Tests/SunSkog.Api.Tests.csproj
 
       - name: Build
-        run: dotnet build ./SunSkog.Api.sln -c Release --no-restore
+        run: dotnet build SunSkog.Api/SunSkog.Api.csproj -c Release --no-restore
 
-      - name: Test with coverage (XPlat)
-        run: dotnet test ./SunSkog.Api.Tests/SunSkog.Api.Tests.csproj -c Release --no-build --collect:"XPlat Code Coverage"
-
-      - name: Install ReportGenerator
-        run: dotnet tool install -g dotnet-reportgenerator-globaltool
-
-      - name: Create coverage report
-        shell: bash
-        run: |
-          REPORTS=$(find . -type f -path "*/TestResults/*/coverage.cobertura.xml" || true)
-          if [ -z "$REPORTS" ]; then
-            echo "No coverage.cobertura.xml found."
-            exit 0
-          fi
-          ~/.dotnet/tools/reportgenerator \
-            -reports:"**/TestResults/*/coverage.cobertura.xml" \
-            -targetdir:"coverage-report" \
-            -reporttypes:"Html;TextSummary"
-          echo "=== Coverage Summary ==="
-          cat coverage-report/Summary.txt || true
-
-      - name: Upload coverage artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage-report
-          if-no-files-found: warn
+      - name: Test
+        run: dotnet test SunSkog.Api.Tests/SunSkog.Api.Tests.csproj -c Release --no-build --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results.trx"
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: |
-            **/TestResults/*.trx
-            **/TestResults/*/coverage.cobertura.xml
-          if-no-files-found: warn
+          path: SunSkog.Api.Tests/TestResults
+
+      - name: Upload coverage (Cobertura)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: SunSkog.Api.Tests/TestResults/**/coverage.cobertura.xml
