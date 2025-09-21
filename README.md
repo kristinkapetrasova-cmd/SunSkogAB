@@ -1,3 +1,5 @@
+# SunSkogAB
+
 [![.NET CI](https://github.com/kristinkapetrasova-cmd/SunSkogAB/actions/workflows/dotnet-ci.yml/badge.svg)](https://github.com/kristinkapetrasova-cmd/SunSkogAB/actions/workflows/dotnet-ci.yml)
 
 Minimal API pro evidenci timesheetů.
