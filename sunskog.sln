@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SunSkog.Api", "SunSkog.Api\SunSkog.Api.csproj", "{BBF9ABE9-65C1-4389-8DB8-99E2DE754571}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SunSkog.Api.Tests", "SunSkog.Api.Tests\SunSkog.Api.Tests.csproj", "{7191B36B-8BE8-4D5F-88F7-5A0AB6759DEA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BBF9ABE9-65C1-4389-8DB8-99E2DE754571}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBF9ABE9-65C1-4389-8DB8-99E2DE754571}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBF9ABE9-65C1-4389-8DB8-99E2DE754571}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBF9ABE9-65C1-4389-8DB8-99E2DE754571}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7191B36B-8BE8-4D5F-88F7-5A0AB6759DEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7191B36B-8BE8-4D5F-88F7-5A0AB6759DEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7191B36B-8BE8-4D5F-88F7-5A0AB6759DEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7191B36B-8BE8-4D5F-88F7-5A0AB6759DEA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

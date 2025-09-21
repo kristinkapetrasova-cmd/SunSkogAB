@@ -1,0 +1,53 @@
+# Build artefakty
+bin/
+obj/
+**/bin/
+**/obj/
+.out/
+artifacts/
+TestResults/
+
+# VS/JetBrains
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Dotnet tooling
+*.nupkg
+project.lock.json
+project.fragment.lock.json
+paket-files/
+.nuget/
+*.snk
+
+# Logs
+*.log
+logs/
+
+# Coverage
+coverage/
+coverage-report/
+coveragereport/
+*.xml.coverage
+*.cobertura.xml
+*.lcov
+
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# Docker local
+**/.env
+.env
+
+# Dev-only config (pokud v nich máš tajemství)
+appsettings.Development.json
+
+# Kancelářské soubory
+*.xlsx
+*.xls
+*.docx
+*.pptx
