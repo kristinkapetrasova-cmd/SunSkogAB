@@ -1,14 +1,29 @@
+@'
 version: "3.9"
+
 services:
-  db:
+  api:
+    build:
+      context: ./SunSkog.Api
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__Default=Server=sqldata;Database=SunSkogDb;User Id=sa;Password=Your_strong_Password123;TrustServerCertificate=true
+    ports:
+      - "5250:8080"
+    depends_on:
+      - sqldata
+
+  sqldata:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: sunskog-sql
     environment:
       - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=YourStrong!Passw0rd
+      - SA_PASSWORD=Your_strong_Password123
     ports:
       - "1433:1433"
     volumes:
-      - mssql-data:/var/opt/mssql
+      - mssqldata:/var/opt/mssql
+
 volumes:
-  mssql-data:
+  mssqldata:
+'@ | Set-Content -Encoding UTF8 -NoNewline .\docker-compose.yml

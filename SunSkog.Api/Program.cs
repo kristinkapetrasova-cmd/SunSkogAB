@@ -8,8 +8,28 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SunSkog.Api.Data;
 using SunSkog.Api.Models;
+using Serilog;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using SunSkog.Api.Health;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Serilog – loguje do konzole (čitelné v Dockeru i v CI)
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
+// Health checks – self + DB
+builder.Services
+    .AddHealthChecks()
+    .AddCheck<DbHealthCheck>("database");
 
 // === DbContext (SQL Server) ===
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -90,6 +110,39 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Strukturované logy každého requestu
+app.UseSerilogRequestLogging();
+
+// Globální handler chyb -> vrací ProblemDetails (application/problem+json)
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var ex = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+
+        var problem = new ProblemDetails
+        {
+            Status = StatusCodes.Status500InternalServerError,
+            Title = "Unexpected error",
+            Detail = app.Environment.IsDevelopment() ? ex?.Message : "Something went wrong."
+        };
+
+        context.Response.StatusCode = problem.Status ?? StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/problem+json";
+        await context.Response.WriteAsJsonAsync(problem);
+    });
+});
+
+// Health endpoints
+app.MapHealthChecks("/health/"); // liveness (jednoduché OK/KO)
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    // readiness – vrátí JSON s položkami
+    ResponseWriter = HealthResponseWriter.WriteJson,
+    Predicate = _ => true
+});
+
 
 // === Mapování endpointů (nech jen to, co opravdu máš v projektu) ===
 SunSkog.Api.Auth.AuthEndpoints.Map(app);
