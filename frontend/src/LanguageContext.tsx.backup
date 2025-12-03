@@ -1,0 +1,443 @@
+// src/LanguageContext.tsx
+import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+
+// Podporované jazyky
+export type Language = "cs" | "en";
+
+// Typ pro překladový slovník
+type Translations = {
+  // Auth
+  login: string;
+  logout: string;
+  email: string;
+  password: string;
+  loginButton: string;
+  loggingIn: string;
+  loginError: string;
+  
+  // Navigation
+  myTimesheets: string;
+  adminTimesheets: string;
+  inventory: string;
+  reports: string;
+  dashboard: string;
+  
+  // Dashboard
+  welcomeTitle: string;
+  welcomeText: string;
+  
+  // Timesheets
+  timesheets: string;
+  createTimesheet: string;
+  periodStart: string;
+  periodEnd: string;
+  status: string;
+  totalHours: string;
+  totalKm: string;
+  totalPieces: string;
+  totalPay: string;
+  submit: string;
+  approve: string;
+  return: string;
+  viewDetails: string;
+  backToList: string;
+  addEntry: string;
+  entries: string;
+  workDate: string;
+  project: string;
+  task: string;
+  hours: string;
+  km: string;
+  pieces: string;
+  comment: string;
+  hoursLabel: string;
+  kmLabel: string;
+  piecesLabel: string;
+  actions: string;
+  noEntries: string;
+  pay: string;
+  
+  // Timesheet status
+  statusDraft: string;
+  statusSubmitted: string;
+  statusApproved: string;
+  statusReturned: string;
+  statusPaid: string;
+  
+  // Inventory
+  inventoryTitle: string;
+  addItem: string;
+  searchPlaceholder: string;
+  itemName: string;
+  sku: string;
+  serialNumber: string;
+  minStock: string;
+  active: string;
+  inactive: string;
+  edit: string;
+  delete: string;
+  receive: string;
+  issue: string;
+  lowStock: string;
+  movements: string;
+  date: string;
+  type: string;
+  quantity: string;
+  noMovements: string;
+  selectItem: string;
+  noItems: string;
+  currentStock: string;
+  typeIn: string;
+  typeOut: string;
+  qrCode: string;
+  printQr: string;
+  
+  // Reports
+  reportsSummary: string;
+  reportsUsers: string;
+  reportsTeams: string;
+  totalEmployees: string;
+  totalTimesheets: string;
+  averageHours: string;
+  topPerformers: string;
+  
+  // Admin
+  adminPanel: string;
+  allTimesheets: string;
+  pendingApprovals: string;
+  approvedTimesheets: string;
+  employee: string;
+  period: string;
+  submittedAt: string;
+  approveConfirm: string;
+  returnConfirm: string;
+  returnReason: string;
+  
+  // Common
+  loading: string;
+  save: string;
+  cancel: string;
+  close: string;
+  yes: string;
+  no: string;
+  search: string;
+  noResults: string;
+  confirm: string;
+  error: string;
+  success: string;
+  created: string;
+  updated: string;
+  deleted: string;
+  min: string;
+  current: string;
+};
+
+// Česká verze
+const translationsCs: Translations = {
+  // Auth
+  login: "Přihlášení",
+  logout: "Odhlásit",
+  email: "E-mail",
+  password: "Heslo",
+  loginButton: "Přihlásit se",
+  loggingIn: "Přihlašuji...",
+  loginError: "Přihlášení selhalo. Zkontroluj e-mail/heslo nebo běh API.",
+  
+  // Navigation
+  myTimesheets: "Moje výkazy",
+  adminTimesheets: "Admin výkazy",
+  inventory: "Sklad",
+  reports: "Reporty",
+  dashboard: "Dashboard",
+  
+  // Dashboard
+  welcomeTitle: "Vítej v SunSkog",
+  welcomeText: "Vyber, co chceš dělat:",
+  
+  // Timesheets
+  timesheets: "Výkazy práce",
+  createTimesheet: "Nový výkaz",
+  periodStart: "Začátek období",
+  periodEnd: "Konec období",
+  status: "Stav",
+  totalHours: "Celkem hodin",
+  totalKm: "Celkem km",
+  totalPieces: "Celkem kusů",
+  totalPay: "Celková mzda",
+  submit: "Odeslat",
+  approve: "Schválit",
+  return: "Vrátit",
+  viewDetails: "Zobrazit detail",
+  backToList: "Zpět na seznam",
+  addEntry: "Přidat záznam",
+  entries: "Záznamy",
+  workDate: "Datum práce",
+  project: "Projekt",
+  task: "Úkol",
+  hours: "Hodiny",
+  km: "km",
+  pieces: "Kusy",
+  comment: "Komentář",
+  hoursLabel: "Hodiny",
+  kmLabel: "Kilometry",
+  piecesLabel: "Kusové práce",
+  actions: "Akce",
+  noEntries: "Žádné záznamy.",
+  pay: "Mzda",
+  
+  // Timesheet status
+  statusDraft: "Koncept",
+  statusSubmitted: "Odesláno",
+  statusApproved: "Schváleno",
+  statusReturned: "Vráceno",
+  statusPaid: "Vyplaceno",
+  
+  // Inventory
+  inventoryTitle: "Sklad",
+  addItem: "Přidat",
+  searchPlaceholder: "Hledat název / SKU...",
+  itemName: "Název položky",
+  sku: "SKU",
+  serialNumber: "Sériové číslo",
+  minStock: "Min. stav",
+  active: "aktivní",
+  inactive: "neaktivní",
+  edit: "Upravit",
+  delete: "Smazat",
+  receive: "Příjem",
+  issue: "Výdej",
+  lowStock: "Nízký stav",
+  movements: "Pohyby",
+  date: "Datum",
+  type: "Typ",
+  quantity: "Množství",
+  noMovements: "Žádné pohyby.",
+  selectItem: "Vyber vlevo položku.",
+  noItems: "Žádné položky.",
+  currentStock: "Aktuální stav",
+  typeIn: "Příjem",
+  typeOut: "Výdej",
+  qrCode: "QR kód",
+  printQr: "Tisknout QR",
+  
+  // Reports
+  reportsSummary: "Souhrn",
+  reportsUsers: "Uživatelé",
+  reportsTeams: "Týmy",
+  totalEmployees: "Celkem zaměstnanců",
+  totalTimesheets: "Celkem výkazů",
+  averageHours: "Průměrné hodiny",
+  topPerformers: "Top pracovníci",
+  
+  // Admin
+  adminPanel: "Administrace",
+  allTimesheets: "Všechny výkazy",
+  pendingApprovals: "Čekající na schválení",
+  approvedTimesheets: "Schválené výkazy",
+  employee: "Zaměstnanec",
+  period: "Období",
+  submittedAt: "Odesláno",
+  approveConfirm: "Opravdu chceš schválit tento výkaz?",
+  returnConfirm: "Opravdu chceš vrátit tento výkaz k přepracování?",
+  returnReason: "Důvod vrácení",
+  
+  // Common
+  loading: "Načítám...",
+  save: "Uložit",
+  cancel: "Zrušit",
+  close: "Zavřít",
+  yes: "Ano",
+  no: "Ne",
+  search: "Hledat",
+  noResults: "Žádné výsledky.",
+  confirm: "Potvrdit",
+  error: "Chyba",
+  success: "Úspěch",
+  created: "Vytvořeno",
+  updated: "Aktualizováno",
+  deleted: "Smazáno",
+  min: "min",
+  current: "aktuální",
+};
+
+// Anglická verze
+const translationsEn: Translations = {
+  // Auth
+  login: "Login",
+  logout: "Logout",
+  email: "E-mail",
+  password: "Password",
+  loginButton: "Sign in",
+  loggingIn: "Signing in...",
+  loginError: "Login failed. Check your email/password or API status.",
+  
+  // Navigation
+  myTimesheets: "My Timesheets",
+  adminTimesheets: "Admin Timesheets",
+  inventory: "Inventory",
+  reports: "Reports",
+  dashboard: "Dashboard",
+  
+  // Dashboard
+  welcomeTitle: "Welcome to SunSkog",
+  welcomeText: "Choose what you want to do:",
+  
+  // Timesheets
+  timesheets: "Timesheets",
+  createTimesheet: "New Timesheet",
+  periodStart: "Period Start",
+  periodEnd: "Period End",
+  status: "Status",
+  totalHours: "Total Hours",
+  totalKm: "Total km",
+  totalPieces: "Total Pieces",
+  totalPay: "Total Pay",
+  submit: "Submit",
+  approve: "Approve",
+  return: "Return",
+  viewDetails: "View Details",
+  backToList: "Back to List",
+  addEntry: "Add Entry",
+  entries: "Entries",
+  workDate: "Work Date",
+  project: "Project",
+  task: "Task",
+  hours: "Hours",
+  km: "km",
+  pieces: "Pieces",
+  comment: "Comment",
+  hoursLabel: "Hours",
+  kmLabel: "Kilometers",
+  piecesLabel: "Piecework",
+  actions: "Actions",
+  noEntries: "No entries.",
+  pay: "Pay",
+  
+  // Timesheet status
+  statusDraft: "Draft",
+  statusSubmitted: "Submitted",
+  statusApproved: "Approved",
+  statusReturned: "Returned",
+  statusPaid: "Paid",
+  
+  // Inventory
+  inventoryTitle: "Inventory",
+  addItem: "Add",
+  searchPlaceholder: "Search name / SKU...",
+  itemName: "Item Name",
+  sku: "SKU",
+  serialNumber: "Serial Number",
+  minStock: "Min. Stock",
+  active: "active",
+  inactive: "inactive",
+  edit: "Edit",
+  delete: "Delete",
+  receive: "Receive",
+  issue: "Issue",
+  lowStock: "Low Stock",
+  movements: "Movements",
+  date: "Date",
+  type: "Type",
+  quantity: "Quantity",
+  noMovements: "No movements.",
+  selectItem: "Select an item on the left.",
+  noItems: "No items.",
+  currentStock: "Current Stock",
+  typeIn: "In",
+  typeOut: "Out",
+  qrCode: "QR Code",
+  printQr: "Print QR",
+  
+  // Reports
+  reportsSummary: "Summary",
+  reportsUsers: "Users",
+  reportsTeams: "Teams",
+  totalEmployees: "Total Employees",
+  totalTimesheets: "Total Timesheets",
+  averageHours: "Average Hours",
+  topPerformers: "Top Performers",
+  
+  // Admin
+  adminPanel: "Administration",
+  allTimesheets: "All Timesheets",
+  pendingApprovals: "Pending Approvals",
+  approvedTimesheets: "Approved Timesheets",
+  employee: "Employee",
+  period: "Period",
+  submittedAt: "Submitted At",
+  approveConfirm: "Do you really want to approve this timesheet?",
+  returnConfirm: "Do you really want to return this timesheet for revision?",
+  returnReason: "Return Reason",
+  
+  // Common
+  loading: "Loading...",
+  save: "Save",
+  cancel: "Cancel",
+  close: "Close",
+  yes: "Yes",
+  no: "No",
+  search: "Search",
+  noResults: "No results.",
+  confirm: "Confirm",
+  error: "Error",
+  success: "Success",
+  created: "Created",
+  updated: "Updated",
+  deleted: "Deleted",
+  min: "min",
+  current: "current",
+};
+
+// Mapa překladů
+const translations: Record<Language, Translations> = {
+  cs: translationsCs,
+  en: translationsEn,
+};
+
+// Context type
+type LanguageContextValue = {
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  t: Translations;
+};
+
+const LanguageContext = createContext<LanguageContextValue | undefined>(undefined);
+
+// Provider
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  // Načti jazyk z localStorage, defaultně čeština
+  const [language, setLanguageState] = useState<Language>(() => {
+    const saved = localStorage.getItem("app_language");
+    return (saved === "en" || saved === "cs") ? saved : "cs";
+  });
+
+  // Ulož do localStorage při změně
+  useEffect(() => {
+    localStorage.setItem("app_language", language);
+  }, [language]);
+
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+  };
+
+  const value: LanguageContextValue = {
+    language,
+    setLanguage,
+    t: translations[language],
+  };
+
+  return (
+    <LanguageContext.Provider value={value}>
+      {children}
+    </LanguageContext.Provider>
+  );
+}
+
+// Hook pro použití v komponentách
+export function useLanguage() {
+  const ctx = useContext(LanguageContext);
+  if (!ctx) {
+    throw new Error("useLanguage must be used within LanguageProvider");
+  }
+  return ctx;
+}
