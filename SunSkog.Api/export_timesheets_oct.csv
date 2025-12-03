@@ -1,0 +1,3 @@
+TimesheetId,EmployeeId,EmployeeEmail,EmployeeName,PeriodStart,PeriodEnd,Status,SubmittedAt,ApprovedAt,TotalHours,TotalKm,TotalPieces,TotalPay
+"ac6729e9-ece7-409a-a787-76105af72b0d","d527f150-67f8-4afa-9983-17abed6469c2","admin@sunskog.local","Administrator","2025-10-01","2025-10-15","Approved","2025-10-31 22:37:35","2025-10-31 22:37:35","7.50","12.00","0","1596.00"
+"a459f245-dc83-4c9c-b83a-7c5964da7507","d527f150-67f8-4afa-9983-17abed6469c2","admin@sunskog.local","Administrator","2025-10-01","2025-10-15","Approved","2025-10-27 11:42:52","2025-10-27 11:44:16","7.50","12.00","0","1596.00"

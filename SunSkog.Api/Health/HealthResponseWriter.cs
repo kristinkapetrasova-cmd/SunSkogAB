@@ -1,4 +1,4 @@
-// SunSkog.Api/Health/HealthResponseWriter.cs
+﻿// SunSkog.Api/Health/HealthResponseWriter.cs
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Diagnostics.HealthChecks;

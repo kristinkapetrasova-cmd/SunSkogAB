@@ -1,4 +1,4 @@
-namespace SunSkog.Api.Contracts;
+﻿namespace SunSkog.Api.Contracts;
 
 public sealed class AdminDashboardDto
 {

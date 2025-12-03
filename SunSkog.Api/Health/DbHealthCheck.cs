@@ -1,9 +1,10 @@
-// SunSkog.Api/Health/DbHealthCheck.cs
+﻿// SunSkog.Api/Health/DbHealthCheck.cs
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using SunSkog.Api.Data;
 
 namespace SunSkog.Api.Health;
+
 
 public sealed class DbHealthCheck : IHealthCheck
 {

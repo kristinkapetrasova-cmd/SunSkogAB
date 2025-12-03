@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Http;
 namespace SunSkog.Api.Filters
 {
     /// <summary>
-    /// Minimal API filter: vezme DTO z argumentů, spustí FluentValidation
-    /// a při chybách vrátí 400 ValidationProblem bez volání handleru.
+    /// Minimal API filter: vezme DTO z argumentĹŻ, spustĂ­ FluentValidation
+    /// a pĹ™i chybĂˇch vrĂˇtĂ­ 400 ValidationProblem bez volĂˇnĂ­ handleru.
     /// </summary>
     public sealed class Validate<T> : IEndpointFilter where T : class
     {

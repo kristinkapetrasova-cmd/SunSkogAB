@@ -1,10 +1,8 @@
-using System.Globalization;
-using System.Security.Claims;
+﻿using System.Globalization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using SunSkog.Api.Data;
-using SunSkog.Api.Models;
 
 namespace SunSkog.Api.Endpoints;
 
@@ -29,14 +27,12 @@ public static class AdminTimesheetEndpoints
         {
             if (!UserCanApprove(http)) return Results.Forbid();
 
-            // vstupní parametry
             var fromDate = ParseDateOnly(from);
             var toDate   = ParseDateOnly(to);
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 1;
             if (pageSize > 200) pageSize = 200;
 
-            // základní dotaz
             var q = db.Timesheets.AsNoTracking();
 
             if (fromDate.HasValue) q = q.Where(t => t.PeriodStart >= fromDate.Value);
@@ -45,7 +41,7 @@ public static class AdminTimesheetEndpoints
 
             if (!string.IsNullOrWhiteSpace(employeeEmail))
             {
-                // najdu uživatele podle e-mailu
+                // Najdu Identity uživatele (ApplicationUser) podle e-mailu → Id je string
                 var uid = await db.Users
                     .Where(u => u.Email == employeeEmail)
                     .Select(u => u.Id)
@@ -53,18 +49,17 @@ public static class AdminTimesheetEndpoints
 
                 if (string.IsNullOrEmpty(uid))
                 {
-                    // nikdo takový – vrátíme prázdnou stránku
                     var empty = new Paged<AdminTimesheetListItemDto>(page, pageSize, 0, new List<AdminTimesheetListItemDto>());
                     return Results.Ok(empty);
                 }
 
-                q = q.Where(t => t.EmployeeId == uid);
+                q = q.Where(t => t.EmployeeId == uid); // string == string
             }
 
             var total = await q.CountAsync();
             var skip  = (page - 1) * pageSize;
 
-            // join na Users kvůli e-mailu a jménu
+            // Join na Identity Users kvůli e-mailu a jménu (FullName)
             var pageItems = await (
                 from t in q
                 join u in db.Users on t.EmployeeId equals u.Id into gj
@@ -72,7 +67,7 @@ public static class AdminTimesheetEndpoints
                 orderby t.PeriodStart descending
                 select new AdminTimesheetListItemDto(
                     t.Id,
-                    u != null ? (u.Email ?? "") : "",
+                    u != null ? (u.Email    ?? "") : "",
                     u != null ? (u.FullName ?? "") : "",
                     t.PeriodStart,
                     t.PeriodEnd,
@@ -95,17 +90,16 @@ public static class AdminTimesheetEndpoints
     }
 
     private static bool UserCanApprove(HttpContext http)
-        => http.User.IsInRole("Manager") || http.User.IsInRole("SuperAdmin");
+        => http.User.IsInRole("Admin") || http.User.IsInRole("Manager") || http.User.IsInRole("SuperAdmin");
 
     private static DateOnly? ParseDateOnly(string? s)
     {
         if (string.IsNullOrWhiteSpace(s)) return null;
         return DateOnly.TryParseExact(s, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var d)
             ? d
-            : null;
+            : (DateOnly?)null;
     }
 
-    // jednoduché DTO pro seznam
     public sealed record AdminTimesheetListItemDto(
         Guid Id,
         string EmployeeEmail,

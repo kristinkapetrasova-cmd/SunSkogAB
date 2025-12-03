@@ -9,18 +9,18 @@ using SunSkog.Api.Data;
 
 #nullable disable
 
-namespace SunSkog.Api.Migrations
+namespace SunSkog.Api.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250912143629_AddDecimalPrecision01")]
-    partial class AddDecimalPrecision01
+    [Migration("20251027133015_TeamMembership_Init")]
+    partial class TeamMembership_Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.9")
+                .HasAnnotation("ProductVersion", "9.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -226,7 +226,181 @@ namespace SunSkog.Api.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("SunSkog.Api.Models.Domain.Timesheet", b =>
+            modelBuilder.Entity("SunSkog.Api.Storage.Entities.ApprovalLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Action")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("At")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ByUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("TimesheetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TimesheetId");
+
+                    b.ToTable("ApprovalLogs");
+                });
+
+            modelBuilder.Entity("SunSkog.Api.Storage.Entities.Assignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ReturnedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Assignments");
+                });
+
+            modelBuilder.Entity("SunSkog.Api.Storage.Entities.InventoryItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<int>("MinStock")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("SKU")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SerialNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Size")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("InventoryItems");
+                });
+
+            modelBuilder.Entity("SunSkog.Api.Storage.Entities.StockMovement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("At")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Qty")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.ToTable("StockMovements");
+                });
+
+            modelBuilder.Entity("SunSkog.Api.Storage.Entities.Team", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("LeadUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LeadUserId");
+
+                    b.ToTable("Teams");
+                });
+
+            modelBuilder.Entity("SunSkog.Api.Storage.Entities.TeamMembership", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LeftAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("TeamId", "UserId", "LeftAt");
+
+                    b.ToTable("TeamMemberships");
+                });
+
+            modelBuilder.Entity("SunSkog.Api.Storage.Entities.Timesheet", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -255,12 +429,12 @@ namespace SunSkog.Api.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("TotalHours")
-                        .HasPrecision(9, 2)
-                        .HasColumnType("decimal(9,2)");
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("TotalKm")
-                        .HasPrecision(9, 2)
-                        .HasColumnType("decimal(9,2)");
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("TotalPay")
                         .HasPrecision(18, 2)
@@ -274,11 +448,20 @@ namespace SunSkog.Api.Migrations
                     b.ToTable("Timesheets");
                 });
 
-            modelBuilder.Entity("SunSkog.Api.Models.Domain.TimesheetEntry", b =>
+            modelBuilder.Entity("SunSkog.Api.Storage.Entities.TimesheetEntry", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AreaCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AreaName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("BoxCarryCount")
+                        .HasColumnType("int");
 
                     b.Property<string>("Comment")
                         .HasColumnType("nvarchar(max)");
@@ -287,21 +470,39 @@ namespace SunSkog.Api.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("ExtraNote")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<TimeOnly?>("FromTime")
+                        .HasColumnType("time");
+
+                    b.Property<decimal?>("HectarePay")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("HectareRate")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("Hectares")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal>("HourRate")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Hours")
-                        .HasPrecision(9, 2)
-                        .HasColumnType("decimal(9,2)");
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Km")
-                        .HasPrecision(9, 2)
-                        .HasColumnType("decimal(9,2)");
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("KmRate")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("PauseMinutes")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("PieceRate")
                         .HasPrecision(18, 2)
@@ -319,6 +520,15 @@ namespace SunSkog.Api.Migrations
                     b.Property<Guid>("TimesheetId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<TimeOnly?>("ToTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("TrKind")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("TravelMinutes")
+                        .HasColumnType("int");
+
                     b.Property<DateOnly>("WorkDate")
                         .HasColumnType("date");
 
@@ -327,6 +537,36 @@ namespace SunSkog.Api.Migrations
                     b.HasIndex("TimesheetId");
 
                     b.ToTable("TimesheetEntries");
+                });
+
+            modelBuilder.Entity("SunSkog.Api.Storage.Entities.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("TeamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -380,9 +620,67 @@ namespace SunSkog.Api.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("SunSkog.Api.Models.Domain.TimesheetEntry", b =>
+            modelBuilder.Entity("SunSkog.Api.Storage.Entities.Assignment", b =>
                 {
-                    b.HasOne("SunSkog.Api.Models.Domain.Timesheet", "Timesheet")
+                    b.HasOne("SunSkog.Api.Storage.Entities.InventoryItem", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SunSkog.Api.Storage.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SunSkog.Api.Storage.Entities.StockMovement", b =>
+                {
+                    b.HasOne("SunSkog.Api.Storage.Entities.InventoryItem", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+                });
+
+            modelBuilder.Entity("SunSkog.Api.Storage.Entities.Team", b =>
+                {
+                    b.HasOne("SunSkog.Api.Models.ApplicationUser", "LeadUser")
+                        .WithMany()
+                        .HasForeignKey("LeadUserId");
+
+                    b.Navigation("LeadUser");
+                });
+
+            modelBuilder.Entity("SunSkog.Api.Storage.Entities.TeamMembership", b =>
+                {
+                    b.HasOne("SunSkog.Api.Storage.Entities.Team", "Team")
+                        .WithMany("Members")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SunSkog.Api.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Team");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SunSkog.Api.Storage.Entities.TimesheetEntry", b =>
+                {
+                    b.HasOne("SunSkog.Api.Storage.Entities.Timesheet", "Timesheet")
                         .WithMany("Entries")
                         .HasForeignKey("TimesheetId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -391,7 +689,21 @@ namespace SunSkog.Api.Migrations
                     b.Navigation("Timesheet");
                 });
 
-            modelBuilder.Entity("SunSkog.Api.Models.Domain.Timesheet", b =>
+            modelBuilder.Entity("SunSkog.Api.Storage.Entities.User", b =>
+                {
+                    b.HasOne("SunSkog.Api.Storage.Entities.Team", "Team")
+                        .WithMany()
+                        .HasForeignKey("TeamId");
+
+                    b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("SunSkog.Api.Storage.Entities.Team", b =>
+                {
+                    b.Navigation("Members");
+                });
+
+            modelBuilder.Entity("SunSkog.Api.Storage.Entities.Timesheet", b =>
                 {
                     b.Navigation("Entries");
                 });

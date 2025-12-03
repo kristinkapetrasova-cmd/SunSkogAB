@@ -1,146 +1,230 @@
+﻿using System.Globalization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using SunSkog.Api.Contracts;
 using SunSkog.Api.Data;
-using SunSkog.Api.Models.Domain;
 
 namespace SunSkog.Api.Endpoints;
 
 public static class AdminReportsEndpoints
 {
-    public static void Map(IEndpointRouteBuilder app)
+    public static IEndpointRouteBuilder MapAdminReportsEndpoints(this IEndpointRouteBuilder app)
     {
-        var g = app.MapGroup("/api/admin/reports").RequireAuthorization();
+        var grp = app.MapGroup("/api/admin/reports")
+            .WithTags("Admin - Reports")
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin,Accountant,Management" });
 
-        // GET /api/admin/reports/summary/employees?from=&to=&status=
-        g.MapGet("/summary/employees", async (
-            ApplicationDbContext db,
-            string? from,
-            string? to,
-            int? status
-        ) =>
+        // Souhrn za období (firma)
+        grp.MapGet("/summary", async (ApplicationDbContext db, string? from, string? to) =>
         {
-            DateOnly? fromDate = null, toDate = null;
-            if (!string.IsNullOrWhiteSpace(from) && DateOnly.TryParse(from, out var f)) fromDate = f;
-            if (!string.IsNullOrWhiteSpace(to)   && DateOnly.TryParse(to,   out var tParsed)) toDate = tParsed;
+            var (dFrom, dTo) = GetRangeOrDefault(from, to);
 
-            IQueryable<Models.Domain.Timesheet> q = db.Timesheets.AsNoTracking();
+            var entriesQ = db.TimesheetEntries
+                .AsNoTracking()
+                .Where(e => e.WorkDate >= dFrom && e.WorkDate <= dTo);
 
-            if (fromDate.HasValue) q = q.Where(ts => ts.PeriodEnd   >= fromDate.Value);
-            if (toDate.HasValue)   q = q.Where(ts => ts.PeriodStart <= toDate.Value);
-
-            if (status.HasValue)
-            {
-                var wanted = (TimesheetStatus)status.Value;
-                q = q.Where(ts => ts.Status == wanted);
-            }
-
-            var data = await q
-                .GroupBy(ts => ts.EmployeeId)
-                .Select(g1 => new
+            var totals = await entriesQ
+                .GroupBy(_ => 1)
+                .Select(g => new
                 {
-                    EmployeeId    = g1.Key,
-                    TotalTs       = g1.Count(),
-                    DraftCount    = g1.Count(x => x.Status == TimesheetStatus.Draft),
-                    SubmittedCnt  = g1.Count(x => x.Status == TimesheetStatus.Submitted),
-                    ApprovedCnt   = g1.Count(x => x.Status == TimesheetStatus.Approved),
-                    ReturnedCnt   = g1.Count(x => x.Status == TimesheetStatus.Returned),
-                    Hours         = g1.Sum(x => x.TotalHours),
-                    Km            = g1.Sum(x => x.TotalKm),
-                    Pieces        = g1.Sum(x => x.TotalPieces),
-                    Pay           = g1.Sum(x => x.TotalPay)
+                    Hours  = g.Sum(x => x.Hours),
+                    Km     = g.Sum(x => x.Km),
+                    Pieces = g.Sum(x => x.Pieces),
+                    Pay    = g.Sum(x => x.EntryPay)
+                })
+                .FirstOrDefaultAsync() ?? new { Hours = 0m, Km = 0m, Pieces = 0, Pay = 0m };
+
+            var tsInRange = await db.TimesheetEntries
+                .AsNoTracking()
+                .Where(e => e.WorkDate >= dFrom && e.WorkDate <= dTo)
+                .Select(e => e.TimesheetId)
+                .Distinct()
+                .ToListAsync();
+
+            var tsStats = await db.Timesheets
+                .AsNoTracking()
+                .Where(t => tsInRange.Contains(t.Id))
+                .GroupBy(t => t.Status)
+                .Select(g => new { Status = g.Key.ToString(), Count = g.Count() })
+                .ToListAsync();
+
+            var result = new
+            {
+                currency = "SEK",
+                range = new { from = dFrom, to = dTo },
+                totals = new
+                {
+                    hours = totals.Hours,
+                    km = totals.Km,
+                    pieces = totals.Pieces,
+                    pay = totals.Pay
+                },
+                timesheetsByStatus = tsStats
+            };
+
+            return Results.Ok(result);
+        })
+        .WithOpenApi();
+
+        // Teams – agregace po uživatelích (team zatím z aktivního členství; ne-li, "N/A")
+        grp.MapGet("/teams", async (ApplicationDbContext db, string? from, string? to) =>
+        {
+            var (dFrom, dTo) = GetRangeOrDefault(from, to);
+
+            var q = from e in db.TimesheetEntries.AsNoTracking()
+                    join t in db.Timesheets.AsNoTracking() on e.TimesheetId equals t.Id
+                    where e.WorkDate >= dFrom && e.WorkDate <= dTo
+                    select new
+                    {
+                        t.EmployeeId,
+                        e.Hours,
+                        e.Km,
+                        e.Pieces,
+                        e.EntryPay
+                    };
+
+            var byEmployee = await q
+                .GroupBy(x => x.EmployeeId)
+                .Select(g => new
+                {
+                    userId = g.Key,
+                    hours = g.Sum(x => x.Hours),
+                    km = g.Sum(x => x.Km),
+                    pieces = g.Sum(x => x.Pieces),
+                    pay = g.Sum(x => x.EntryPay)
                 })
                 .ToListAsync();
 
-            var userIds = data.Select(d => d.EmployeeId).ToList();
+            var userIds = byEmployee.Select(x => x.userId).ToList();
 
-            var users = await db.Users.AsNoTracking()
+            var users = await db.Users
                 .Where(u => userIds.Contains(u.Id))
-                .Select(u => new { u.Id, u.Email, u.FullName })
+                .Select(u => new { u.Id, u.Email, u.FullName, u.UserName })
                 .ToListAsync();
 
-            var res = data
-                .Select(d =>
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            var activeMemberships = await db.TeamMemberships
+                .Include(m => m.Team)
+                .Where(m => userIds.Contains(m.UserId)
+                            && m.FromDate <= today
+                            && (m.ToDate == null || m.ToDate >= today))
+                .ToListAsync();
+
+            var byTeam = byEmployee
+                .Select(x =>
                 {
-                    var u = users.FirstOrDefault(x => x.Id == d.EmployeeId);
-                    return new AdminEmployeeSummaryDto
+                    var u = users.FirstOrDefault(z => z.Id == x.userId);
+                    var m = activeMemberships.FirstOrDefault(z => z.UserId == x.userId);
+                    return new
                     {
-                        EmployeeEmail   = u?.Email,
-                        EmployeeName    = u?.FullName,
-                        TotalTimesheets = d.TotalTs,
-                        DraftCount      = d.DraftCount,
-                        SubmittedCount  = d.SubmittedCnt,
-                        ApprovedCount   = d.ApprovedCnt,
-                        ReturnedCount   = d.ReturnedCnt,
-                        TotalHours      = d.Hours,
-                        TotalKm         = d.Km,
-                        TotalPieces     = d.Pieces,
-                        TotalPay        = d.Pay
+                        team = m?.Team?.Name ?? "N/A",
+                        userId = x.userId,
+                        email = u?.Email ?? "",
+                        name = u?.FullName ?? u?.UserName ?? "",
+                        x.hours,
+                        x.km,
+                        x.pieces,
+                        x.pay,
+                        currency = "SEK"
                     };
                 })
-                .OrderBy(r => r.EmployeeName ?? r.EmployeeEmail)
+                .OrderByDescending(x => x.pay)
                 .ToList();
 
-            return Results.Ok(res);
-        });
+            var result = new
+            {
+                range = new { from = dFrom, to = dTo },
+                items = byTeam
+            };
 
-        // GET /api/admin/reports/summary/daily?from=&to=&status=&employeeEmail=
-        g.MapGet("/summary/daily", async (
-            ApplicationDbContext db,
-            string? from,
-            string? to,
-            int? status,
-            string? employeeEmail
-        ) =>
+            return Results.Ok(result);
+        })
+        .WithOpenApi();
+
+        // NEW: Users – agregace čistě po uživateli (včetně názvu aktivního týmu)
+        grp.MapGet("/users", async (ApplicationDbContext db, string? from, string? to) =>
         {
-            DateOnly? fromDate = null, toDate = null;
-            if (!string.IsNullOrWhiteSpace(from) && DateOnly.TryParse(from, out var f)) fromDate = f;
-            if (!string.IsNullOrWhiteSpace(to)   && DateOnly.TryParse(to,   out var tParsed)) toDate = tParsed;
+            var (dFrom, dTo) = GetRangeOrDefault(from, to);
 
-            // Start: entry + timesheet
-            var joined = db.TimesheetEntries.AsNoTracking()
-                .Join(
-                    db.Timesheets.AsNoTracking(),
-                    e  => e.TimesheetId,
-                    ts => ts.Id,
-                    (e, ts) => new { e, ts }
-                );
-
-            if (fromDate.HasValue) joined = joined.Where(x => x.e.WorkDate >= fromDate.Value);
-            if (toDate.HasValue)   joined = joined.Where(x => x.e.WorkDate <= toDate.Value);
-
-            if (status.HasValue)
-            {
-                var wanted = (TimesheetStatus)status.Value;
-                joined = joined.Where(x => x.ts.Status == wanted);
-            }
-
-            if (!string.IsNullOrWhiteSpace(employeeEmail))
-            {
-                joined = joined
-                    .Join(
-                        db.Users.AsNoTracking(),
-                        x => x.ts.EmployeeId,
-                        u => u.Id,
-                        (x, u) => new { x.e, x.ts, u }
-                    )
-                    .Where(x => x.u.Email != null && x.u.Email == employeeEmail)
-                    .Select(x => new { e = x.e, ts = x.ts });
-            }
-
-            var res = await joined
-                .GroupBy(x => x.e.WorkDate)
-                .Select(g1 => new AdminDailyTotalsDto
-                {
-                    Date        = g1.Key,
-                    TotalHours  = g1.Sum(v => v.e.Hours),
-                    TotalKm     = g1.Sum(v => v.e.Km),
-                    TotalPieces = g1.Sum(v => v.e.Pieces),
-                    TotalPay    = g1.Sum(v => v.e.EntryPay)
-                })
-                .OrderBy(r => r.Date)
+            var agg = await (from e in db.TimesheetEntries.AsNoTracking()
+                             join t in db.Timesheets.AsNoTracking() on e.TimesheetId equals t.Id
+                             where e.WorkDate >= dFrom && e.WorkDate <= dTo
+                             group e by t.EmployeeId into g
+                             select new
+                             {
+                                 userId = g.Key,
+                                 hours = g.Sum(x => x.Hours),
+                                 km = g.Sum(x => x.Km),
+                                 pieces = g.Sum(x => x.Pieces),
+                                 pay = g.Sum(x => x.EntryPay)
+                             })
                 .ToListAsync();
 
-            return Results.Ok(res);
-        });
+            var userIds = agg.Select(a => a.userId).ToList();
+
+            var users = await db.Users
+                .Where(u => userIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.Email, u.FullName, u.UserName })
+                .ToListAsync();
+
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            var memberships = await db.TeamMemberships
+                .Include(m => m.Team)
+                .Where(m => userIds.Contains(m.UserId)
+                            && m.FromDate <= today
+                            && (m.ToDate == null || m.ToDate >= today))
+                .ToListAsync();
+
+            var items = agg
+                .Select(a =>
+                {
+                    var u = users.FirstOrDefault(z => z.Id == a.userId);
+                    var m = memberships.FirstOrDefault(z => z.UserId == a.userId);
+                    return new
+                    {
+                        userId = a.userId,
+                        email = u?.Email ?? "",
+                        name = u?.FullName ?? u?.UserName ?? "",
+                        team = m?.Team?.Name ?? "N/A",
+                        a.hours,
+                        a.km,
+                        a.pieces,
+                        a.pay,
+                        currency = "SEK"
+                    };
+                })
+                .OrderByDescending(x => x.pay)
+                .ToList();
+
+            var result = new
+            {
+                range = new { from = dFrom, to = dTo },
+                items
+            };
+
+            return Results.Ok(result);
+        })
+        .WithOpenApi();
+
+        return app;
+    }
+
+    private static (DateOnly From, DateOnly To) GetRangeOrDefault(string? from, string? to)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var firstOfMonth = new DateOnly(today.Year, today.Month, 1);
+
+        var fmt = CultureInfo.InvariantCulture;
+
+        var okFrom = DateOnly.TryParse(from, fmt, DateTimeStyles.None, out var dFrom);
+        var okTo   = DateOnly.TryParse(to,   fmt, DateTimeStyles.None, out var dTo);
+
+        if (!okFrom && !okTo) return (firstOfMonth, today);
+        if (!okFrom && okTo)  return (new DateOnly(dTo.Year, dTo.Month, 1), dTo);
+        if (okFrom && !okTo)  return (dFrom, today);
+        if (dFrom > dTo)      return (dTo, dFrom);
+
+        return (dFrom, dTo);
     }
 }
