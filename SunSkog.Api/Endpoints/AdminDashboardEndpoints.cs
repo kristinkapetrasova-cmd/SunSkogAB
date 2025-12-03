@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SunSkog.Api.Contracts;
 using SunSkog.Api.Data;
-using SunSkog.Api.Models.Domain;
+using SunSkog.Api.Storage.Entities;
+using StorageStatus = SunSkog.Api.Storage.Entities.TimesheetStatus;
 
 namespace SunSkog.Api.Endpoints;
 
@@ -43,7 +44,7 @@ public static class AdminDashboardEndpoints
                     select t;
             }
 
-            // --- počty dle statusu (jedním dotazem) ---
+            // --- poÄŤty dle statusu (jednĂ­m dotazem) ---
             var countsRaw = await q
                 .GroupBy(t => t.Status)
                 .Select(g => new { Status = g.Key, Count = g.Count() })
@@ -74,7 +75,7 @@ public static class AdminDashboardEndpoints
                 TotalPay    = totalsRaw?.TotalPay    ?? 0
             };
 
-            // --- posledních 10 změn (ApprovedAt/SubmittedAt, jinak null) ---
+            // --- poslednĂ­ch 10 zmÄ›n (ApprovedAt/SubmittedAt, jinak null) ---
             var recent = await
                 (from t in q
                  join u in db.Users.AsNoTracking() on t.EmployeeId equals u.Id into gj
@@ -94,7 +95,7 @@ public static class AdminDashboardEndpoints
                 .Take(10)
                 .ToListAsync();
 
-            // --- TOP 5 zaměstnanců dle odměny ---
+            // --- TOP 5 zamÄ›stnancĹŻ dle odmÄ›ny ---
             var topAgg = await
                 (from t in q
                  group t by t.EmployeeId into g1

@@ -1,11 +1,11 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using SunSkog.Api.Data;
-using SunSkog.Api.Models.Domain;
+using SunSkog.Api.Storage.Entities;
 
 namespace SunSkog.Api.Endpoints;
 
@@ -13,10 +13,10 @@ public static class TimesheetExportEndpoints
 {
     public static void Map(IEndpointRouteBuilder app)
     {
-        // stejný prefix jako u TimesheetEndpoints – přidáváme jen nové routy
+        // stejnĂ˝ prefix jako u TimesheetEndpoints â€“ pĹ™idĂˇvĂˇme jen novĂ© routy
         var g = app.MapGroup("/api/timesheets").RequireAuthorization();
 
-        // GET /api/timesheets/{id}/csv  – CSV pro jeden výkaz
+        // GET /api/timesheets/{id}/csv  â€“ CSV pro jeden vĂ˝kaz
         g.MapGet("/{id:guid}/csv", async (Guid id, HttpContext http, ApplicationDbContext db) =>
         {
             var userId = http.User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -29,14 +29,14 @@ public static class TimesheetExportEndpoints
 
             if (ts == null) return Results.NotFound();
 
-            // Přístup: vlastník nebo Approver (stejně jako u detailu)
+            // PĹ™Ă­stup: vlastnĂ­k nebo Approver (stejnÄ› jako u detailu)
             if (ts.EmployeeId != userId && !UserCanApprove(http))
                 return Results.Forbid();
 
             var csv = BuildSingleTimesheetCsv(ts);
             var fileName = $"timesheet_{ts.PeriodStart:yyyyMMdd}_{ts.PeriodEnd:yyyyMMdd}_{ts.Id}.csv";
 
-            // UTF-8 BOM kvůli Excelu
+            // UTF-8 BOM kvĹŻli Excelu
             var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(csv)).ToArray();
             return Results.File(bytes, "text/csv; charset=utf-8", fileName);
         });
@@ -79,7 +79,7 @@ public static class TimesheetExportEndpoints
     private static DateOnly? ParseDateOnly(string? s)
     {
         if (string.IsNullOrWhiteSpace(s)) return null;
-        // očekáváno "yyyy-MM-dd"
+        // oÄŤekĂˇvĂˇno "yyyy-MM-dd"
         if (DateOnly.TryParseExact(s, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var d))
             return d;
         return null;
@@ -88,7 +88,7 @@ public static class TimesheetExportEndpoints
     private static string Csv(string? s)
     {
         if (string.IsNullOrEmpty(s)) return "\"\"";
-        // escapování uvozovek
+        // escapovĂˇnĂ­ uvozovek
         var esc = s.Replace("\"", "\"\"");
         return $"\"{esc}\"";
     }
@@ -101,7 +101,7 @@ public static class TimesheetExportEndpoints
     {
         var sb = new StringBuilder();
 
-        // hlavička
+        // hlaviÄŤka
         sb.AppendLine("Id;EmployeeId;PeriodStart;PeriodEnd;Status;SubmittedAt;ApprovedAt;Notes;TotalHours;TotalKm;TotalPieces;TotalPay");
         sb.AppendLine(string.Join(";", new[]
         {
@@ -119,7 +119,7 @@ public static class TimesheetExportEndpoints
             Csv(ts.TotalPay)
         }));
 
-        sb.AppendLine(); // prázdný řádek
+        sb.AppendLine(); // prĂˇzdnĂ˝ Ĺ™Ăˇdek
         sb.AppendLine("Entries:");
         sb.AppendLine("WorkDate;Project;Task;Hours;Km;Pieces;HourRate;KmRate;PieceRate;EntryPay;Comment");
 
@@ -153,7 +153,7 @@ public static class TimesheetExportEndpoints
         {
             if (ts.Entries.Count == 0)
             {
-                // i prázdné výkazy chceme vidět – aspoň jeden řádek bez entry
+                // i prĂˇzdnĂ© vĂ˝kazy chceme vidÄ›t â€“ aspoĹ jeden Ĺ™Ăˇdek bez entry
                 sb.AppendLine(string.Join(";", new[]
                 {
                     ts.Id.ToString(),
@@ -187,7 +187,7 @@ public static class TimesheetExportEndpoints
                 }));
             }
 
-            // souhrnný řádek za výkaz
+            // souhrnnĂ˝ Ĺ™Ăˇdek za vĂ˝kaz
             sb.AppendLine(string.Join(";", new[]
             {
                 ts.Id.ToString(),

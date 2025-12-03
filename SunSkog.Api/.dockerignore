@@ -1,0 +1,11 @@
+@'
+bin/
+obj/
+**/TestResults/
+**/*.trx
+.vscode/
+.git/
+.github/
+*.user
+*.swp
+'@ | Set-Content -Encoding UTF8 -NoNewline .\SunSkog.Api\.dockerignore

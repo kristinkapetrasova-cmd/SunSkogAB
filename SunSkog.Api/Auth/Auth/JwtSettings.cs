@@ -1,3 +1,4 @@
+﻿using SunSkog.Api.Models;
 namespace SunSkog.Api.Auth
 {
     public class JwtSettings

@@ -1,4 +1,4 @@
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using FluentValidation;
@@ -73,7 +73,7 @@ namespace SunSkog.Api.Auth
             var roles = await userManager.GetRolesAsync(user);
             if (roles.Count > 0)
             {
-                // první role
+                // prvnĂ­ role
                 claims.Add(new(ClaimTypes.Role, roles[0]));
             }
 

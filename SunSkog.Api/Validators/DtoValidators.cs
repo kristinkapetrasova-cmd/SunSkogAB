@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using FluentValidation;
 using SunSkog.Api.Contracts;
 
@@ -17,7 +17,7 @@ namespace SunSkog.Api.Validators
             RuleFor(x => x.Role)
                 .NotEmpty()
                 .Must(r => allowed.Contains(r ?? string.Empty))
-                .WithMessage("Role musí být jedna z: Employee, Manager, Admin, SuperAdmin.");
+                .WithMessage("Role musĂ­ bĂ˝t jedna z: Employee, Manager, Admin, SuperAdmin.");
         }
     }
 
@@ -53,7 +53,7 @@ namespace SunSkog.Api.Validators
 
             RuleFor(x => x)
                 .Must(e => (e.Hours > 0) || (e.Km > 0) || (e.Pieces > 0))
-                .WithMessage("Musí být vyplněny alespoň Hours, Km nebo Pieces (nenulové).");
+                .WithMessage("MusĂ­ bĂ˝t vyplnÄ›ny alespoĹ Hours, Km nebo Pieces (nenulovĂ©).");
         }
     }
 
@@ -66,7 +66,7 @@ namespace SunSkog.Api.Validators
 
             RuleFor(x => x)
                 .Must(x => x.PeriodStart <= x.PeriodEnd)
-                .WithMessage("periodStart musí být menší nebo rovno periodEnd.");
+                .WithMessage("periodStart musĂ­ bĂ˝t menĹˇĂ­ nebo rovno periodEnd.");
 
             When(x => x.Entries != null && x.Entries.Any(), () =>
             {
@@ -80,7 +80,7 @@ namespace SunSkog.Api.Validators
                         if (e.WorkDate < dto.PeriodStart || e.WorkDate > dto.PeriodEnd)
                         {
                             ctx.AddFailure($"entries[{i}].workDate",
-                                "workDate musí být v intervalu periodStart..periodEnd.");
+                                "workDate musĂ­ bĂ˝t v intervalu periodStart..periodEnd.");
                         }
                     }
                 });

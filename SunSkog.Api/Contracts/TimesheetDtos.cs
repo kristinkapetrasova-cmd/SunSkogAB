@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace SunSkog.Api.Contracts
 {
-    // ----- Vstupní DTO pro položku výkazu (při vytváření) -----
+    // ----- VstupnĂ­ DTO pro poloĹľku vĂ˝kazu (pĹ™i vytvĂˇĹ™enĂ­) -----
     public class EntryDto
     {
         public DateOnly WorkDate { get; set; }
@@ -18,7 +18,7 @@ namespace SunSkog.Api.Contracts
         public string? Comment { get; set; }
     }
 
-    // ----- Vstupní DTO pro vytvoření výkazu -----
+    // ----- VstupnĂ­ DTO pro vytvoĹ™enĂ­ vĂ˝kazu -----
     public class CreateDto
     {
         public DateOnly PeriodStart { get; set; }
@@ -26,13 +26,13 @@ namespace SunSkog.Api.Contracts
         public List<EntryDto>? Entries { get; set; }
     }
 
-    // ----- Vstupní DTO s poznámkou (approve/return) -----
+    // ----- VstupnĂ­ DTO s poznĂˇmkou (approve/return) -----
     public class NoteDto
     {
         public string? Notes { get; set; }
     }
 
-    // ----- Výstup pro seznam výkazů (admin i /my) -----
+    // ----- VĂ˝stup pro seznam vĂ˝kazĹŻ (admin i /my) -----
     public record TimesheetListItemDto(
         Guid Id,
         string EmployeeId,
@@ -48,7 +48,7 @@ namespace SunSkog.Api.Contracts
         decimal TotalPay
     );
 
-    // ----- Výstupní detail položky výkazu -----
+    // ----- VĂ˝stupnĂ­ detail poloĹľky vĂ˝kazu -----
     public record TimesheetEntryDetailDto(
         Guid Id,
         DateOnly WorkDate,
@@ -64,7 +64,7 @@ namespace SunSkog.Api.Contracts
         string? Comment
     );
 
-    // ----- Výstupní detail výkazu -----
+    // ----- VĂ˝stupnĂ­ detail vĂ˝kazu -----
     public record TimesheetDetailDto(
         Guid Id,
         string EmployeeId,

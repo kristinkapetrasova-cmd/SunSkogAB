@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+/* brand tokens */
+@theme {
+  --color-brand: #0E7A5F;
+  --color-brand-600: #0b5c47;
+  --radius-card: 16px;
+}
+
+/* utilities */
+@utility btn {
+  @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition
+         bg-[--color-brand] text-black hover:bg-[--color-brand-800] disabled:opacity-50;
+}
+@utility btn-outline {
+  @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition
+         border text-[--color-brand] border-[--color-brand] hover:bg-[--color-brand]/10;
+}
+@utility card { @apply rounded-[--radius-card] border shadow-sm bg-black; }
+@utility badge { @apply inline-flex items-center rounded-full px-3 py-1 text-xs border bg-green; }
+@utility container-page { @apply max-w-6xl mx-auto p-6; }
+
+/* page background */
+html, body, #root { height: 100%; }
+body { @apply bg-gray-50 text-gray-900; }
