@@ -165,11 +165,12 @@ builder.Services.AddRouting(o => o.LowercaseUrls = true);
 
 var app = builder.Build();
 
-// Swagger jen v DEV; v PROD můžeš ponechat UI přes vlastní podmínku/ACL
+// Swagger v production pro testování
+app.UseSwagger();
+app.UseSwaggerUI();
+
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
     app.UseDeveloperExceptionPage();
 }
 
